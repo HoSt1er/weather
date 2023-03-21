@@ -1,140 +1,60 @@
-import requests
 import os
-import time
+
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem
+from PyQt5.QtCore import pyqtSlot
+import sys
+from PyQt5.uic import loadUi
+from PyQt5 import QtGui
+import requests
 from bs4 import BeautifulSoup
-from tkinter import *
 
 
+class weather(QMainWindow):
+    def __init__(self):
+        super(weather, self).__init__()
+        loadUi('Weather.ui', self)
+        self.pushButton.clicked.connect(self.get_weather)
+        self.pushButton.clicked.connect(self._on_add_1)
+        self.number = -1
 
-def clicked():
-    try:
-        m = 'погода-'
-        n = txt.get()
-        n = n.lower()
-        m = m+n
+    def get_weather(self):
+        global city
+        city = self.plainTextEdit.toPlainText().lower()
+        try:
+            url = f'https://sinoptik.ua/погода-{city}'
+            response = requests.get(url)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            global data_day
+            data_day = soup.find('p', class_='day-link')
+            global data_description
+            data_description = soup.find("div", class_ = 'description')
+            global data_min
+            data_min = soup.find('div', class_='min')
+            global data_max
+            data_max = soup.find('div', class_='max')
+            global data_date
+            data_date = soup.find('p', class_='date')
+            global data_month
+            data_month = soup.find('p', class_='month')
+            self.textEdit_1.setText(data_day.text)
+            self.textEdit_2.setText(f'{data_date.text} {data_month.text}')
+            self.textEdit_3.setText(data_description.text)
+            self.textEdit_4.setText(data_min.text)
+            self.textEdit_5.setText(data_max.text)
 
-        SITE = 'https://sinoptik.ua/'
-        SITE = SITE + m
+        except EOFError:
+            self.textEdit.setText('Такого города не существует либо вы неправильно его ввели!')
 
-
-        os.system("cls")
-
-
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.69'}
-
-        full_page = requests.get(SITE, headers=headers)
-
-        soup = BeautifulSoup(full_page.content, 'html.parser')
-
-        a = ''
-
-        a = a + n + ' '
-
-        date = soup.findAll("div", {'class':'main loaded'})
-
-        for i in (date[0].text):
-            a = a + i
-        a = a.split()
-        g = 0
-        d = 0
-
-        for i in range(len(a)):
-            if a[i]=='мин.':
-                g = i
-            elif a[i]=='макс.':
-                d = i
-
-        for i in range(len(a)):
-            if i>0 and i<2:
-                lbl2.configure(text=a[1])
-            elif i>=2 and i==3:
-                lbl3.configure(text=a[2]+' '+a[3])
-            elif i>=4 and i<=(g-2):
-                lbl4.configure(text=a[4]+' '+a[5])
-            elif i>g and i<d:
-                lbl5.configure(text=a[i])
-            elif i>d:
-                lbl6.configure(text=a[i])
-    except LookupError:
-        m = 'погода-'
-        n = txt.get()
-        n = n.lower()
-        m = m+n
-
-        SITE = 'https://sinoptik.ua/'
-        SITE = SITE + m
+    def _on_add_1(self):
+        self.number += 1
+        self.tableWidget.setItem(self.number, 0, QTableWidgetItem(str(self.plainTextEdit.toPlainText())))
+        self.tableWidget.setItem(self.number, 1, QTableWidgetItem(
+            str(f'Сегодня {data_day.text} {data_date.text} {data_month.text} в '
+                f'{city} температура воздуха {data_min.text}, а {data_max.text}')))
 
 
-        os.system("cls")
-
-
-
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.69'}
-
-        full_page = requests.get(SITE, headers=headers)
-
-        soup = BeautifulSoup(full_page.content, 'html.parser')
-
-        a = ''
-
-        a = a + n + ' '
-
-        date = soup.findAll("div", {'class':'main loaded'})
-
-        for i in (date[0].text):
-            a = a + i
-        a = a.split()
-        g = 0
-        d = 0
-
-        for i in range(len(a)):
-            if a[i]=='мин.':
-                g = i
-            elif a[i]=='макс.':
-                d = i
-
-        for i in range(len(a)):
-            if i>0 and i<2:
-                lbl2.configure(text=a[1])
-            elif i>=2 and i==3:
-                lbl3.configure(text=a[2]+' '+a[3])
-            elif i>=4 and i<=(g-2):
-                lbl4.configure(text=a[4]+' '+a[5])
-            elif i>g and i<d:
-                lbl5.configure(text=a[i])
-            elif i>d:
-                lbl6.configure(text=a[i])
-
-
-
-window = Tk()
-window.title("GUI на Python")
-window.geometry("330x230")
-selected = StringVar()
-lbl = Label(window, text="Город: ")
-lbl.grid(column=0, row=0)
-txt = Entry(window,width=10)
-txt.grid(column=1, row=0)
-btn = Button(window, text="Загрузить", command=clicked)
-btn.grid(column=2, row=0)
-lbl = Label(window, text="День недели: ")
-lbl.grid(column=0, row=1)
-lbl = Label(window, text="Дата: ")
-lbl.grid(column=0, row=2)
-lbl = Label(window, text="Описание: ")
-lbl.grid(column=0, row=3)
-lbl = Label(window, text="Температура мин.: ")
-lbl.grid(column=0, row=4)
-lbl = Label(window, text="Температура макс.: ")
-lbl.grid(column=0, row=5)
-lbl2 = Label(window, text="Данные")
-lbl2.grid(column=1, row=1)
-lbl3 = Label(window, text="Данные")
-lbl3.grid(column=1, row=2)
-lbl4 = Label(window, text="Данные")
-lbl4.grid(column=1, row=3)
-lbl5 = Label(window, text="Данные")
-lbl5.grid(column=1, row=4)
-lbl6 = Label(window, text="Данные")
-lbl6.grid(column=1, row=5)
-window.mainloop()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    widget = weather()
+    widget.show()
+    sys.exit(app.exec_())
